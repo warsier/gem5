@@ -53,11 +53,14 @@
 #include "debug/DRAMPower.hh"
 #include "debug/DRAMState.hh"
 #include "debug/Drain.hh"
+#include "debug/PIMProf.hh"
 #include "debug/QOS.hh"
 #include "sim/system.hh"
 
 using namespace std;
 using namespace Data;
+
+uint64_t pimprof_count[2];
 
 DRAMCtrl::DRAMCtrl(const DRAMCtrlParams* p) :
     QoS::MemCtrl(p),
@@ -931,6 +934,15 @@ DRAMCtrl::accessAndRespond(PacketPtr pkt, Tick static_latency)
         // with headerDelay that takes into account the delay provided by
         // the xbar and also the payloadDelay that takes into account the
         // number of data beats.
+        if (pkt->masterId() > 0) {
+            pimprof_count[0]++;
+        }
+        else {
+            //static_latency /= 2;
+            pimprof_count[1]++;
+        }
+        DPRINTF(PIMProf, "pimprof_count: %d %d %d\n",
+            pimprof_count[0], pimprof_count[1], static_latency);
         Tick response_time = curTick() + static_latency + pkt->headerDelay +
                              pkt->payloadDelay;
         // Here we reset the timing of the packet before sending it out.
