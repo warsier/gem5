@@ -63,6 +63,7 @@
 #include "debug/Cache.hh"
 #include "debug/CacheTags.hh"
 #include "debug/CacheVerbose.hh"
+#include "debug/PIMProf.hh"
 #include "enums/Clusivity.hh"
 #include "mem/cache/cache_blk.hh"
 #include "mem/cache/mshr.hh"
@@ -862,6 +863,19 @@ Cache::evictBlock(CacheBlk *blk)
 {
     PacketPtr pkt = (blk->isDirty() || writebackClean) ?
         writebackBlk(blk) : cleanEvictBlk(blk);
+
+    // MasterID master_id = blk->srcMasterId;
+    // std::string master_name = system->getMasterName(master_id);
+    // // DPRINTF(PIMProf, "PIMProf Name: %s\n", master_name.c_str());
+    // if (master_name.find("0") != std::string::npos) {
+    //     pkt->req->setContext(0);
+    // }
+    // else if (master_name.find("1") != std::string::npos) {
+    //     pkt->req->setContext(1);
+    // }
+    // else {
+
+    // }
 
     invalidateBlock(blk);
 

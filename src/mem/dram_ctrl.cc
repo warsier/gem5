@@ -281,37 +281,27 @@ DRAMCtrl::recvAtomic(PacketPtr pkt)
         // keep things going, mimic a closed page
         latency = tRP + tRCD + tCL;
 
-        if (pkt->req->hasContextId()) {
-            if (pkt->req->contextId() == 0) {
-                pimprof_count[0]++;
-            }
-            else if (pkt->req->contextId() == 1) {
-                pimprof_count[1]++;
-            }
-            else {
-                pimprof_count[2]++;
-            }
-            bool flag = (pimprof_count[0] % 10000 == 0);
-            flag |= (pimprof_count[1] % 10000 == 0);
-            flag |= (pimprof_count[2] % 10000 == 0);
-            if (flag) {
-            DPRINTF(PIMProf,
-                "PIMProf contextId: %d; masterId: %d; count: %d %d %d\n",
-                pkt->req->contextId(), pkt->masterId(),
-                improf_count[0], pimprof_count[1], pimprof_count[2]);
-            }
+        MasterID master_id = pkt->masterId();
+        std::string master_name = system()->getMasterName(master_id);
+        if (master_name.find("0") != std::string::npos) {
+            pimprof_count[0]++;
+        }
+        else if (master_name.find("1") != std::string::npos) {
+            pimprof_count[1]++;
         }
         else {
             pimprof_count[2]++;
-            bool flag = (pimprof_count[0] % 10000 == 0);
-            flag |= (pimprof_count[1] % 10000 == 0);
-            flag |= (pimprof_count[2] % 10000 == 0);
-            if (flag) {
+        }
+        bool flag = (pimprof_count[0] % 10000 == 0);
+        flag |= (pimprof_count[1] % 10000 == 0);
+        flag |= (pimprof_count[2] % 10000 == 0);
+        if (flag) {
             DPRINTF(PIMProf,
-                "PIMProf contextId: %d; masterId: %d; count: %d %d %d\n",
-                -1, pkt->masterId(),
+                "PIMProf contextId: %d; master: %s [%d]; count: %d %d %d\n",
+                pkt->req->hasContextId() ? pkt->req->contextId() : -1,
+                system()->getMasterName(pkt->masterId()),
+                pkt->masterId(),
                 pimprof_count[0], pimprof_count[1], pimprof_count[2]);
-            }
         }
     }
     return latency;
@@ -969,42 +959,31 @@ DRAMCtrl::accessAndRespond(PacketPtr pkt, Tick static_latency)
         // number of data beats.
         Tick response_time = static_latency + pkt->headerDelay +
                              pkt->payloadDelay;
-        if (pkt->req->hasContextId()) {
-            if (pkt->req->contextId() == 0) {
-                pimprof_count[0]++;
-            }
-            else if (pkt->req->contextId() == 1) {
-                response_time /= 2;
-                pimprof_count[1]++;
-            }
-            else {
-                pimprof_count[2]++;
-            }
-            bool flag = (pimprof_count[0] % 10000 == 0);
-            flag |= (pimprof_count[1] % 10000 == 0);
-            flag |= (pimprof_count[2] % 10000 == 0);
-            if (flag) {
-            DPRINTF(PIMProf,
-                "PIMProf contextId: %d; masterId: %d; count: %d %d %d; "
-                "responsetime: %d\n",
-                pkt->req->contextId(), pkt->masterId(),
-                pimprof_count[0], pimprof_count[1], pimprof_count[2],
-                response_time);
-            }
+
+        MasterID master_id = pkt->masterId();
+        std::string master_name = system()->getMasterName(master_id);
+        if (master_name.find("0") != std::string::npos) {
+            pimprof_count[0]++;
+        }
+        else if (master_name.find("1") != std::string::npos) {
+            response_time /= 2;
+            pimprof_count[1]++;
         }
         else {
             pimprof_count[2]++;
-            bool flag = (pimprof_count[0] % 10000 == 0);
-            flag |= (pimprof_count[1] % 10000 == 0);
-            flag |= (pimprof_count[2] % 10000 == 0);
-            if (flag) {
-            DPRINTF(PIMProf, "PIMProf contextId: %d; masterId: %d; "
-                "count: %d %d %d; responsetime: %d\n",
-                -1, pkt->masterId(),
-                pimprof_count[0], pimprof_count[1], pimprof_count[2],
-                response_time);
-            }
         }
+        bool flag = (pimprof_count[0] % 10000 == 0);
+        flag |= (pimprof_count[1] % 10000 == 0);
+        flag |= (pimprof_count[2] % 10000 == 0);
+        if (flag) {
+            DPRINTF(PIMProf,
+                "PIMProf contextId: %d; master: %s [%d]; count: %d %d %d\n",
+                pkt->req->hasContextId() ? pkt->req->contextId() : -1,
+                system()->getMasterName(pkt->masterId()),
+                pkt->masterId(),
+                pimprof_count[0], pimprof_count[1], pimprof_count[2]);
+        }
+
         response_time += curTick();
         // Here we reset the timing of the packet before sending it out.
         pkt->headerDelay = pkt->payloadDelay = 0;
